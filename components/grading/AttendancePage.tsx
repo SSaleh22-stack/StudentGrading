@@ -43,10 +43,10 @@ export default function AttendancePage({
     new Date().toISOString().split("T")[0]
   );
   
-  const hasSubscription = hasActiveSubscription();
+  const { hasSubscription } = useSubscription();
   
   const checkSubscription = () => {
-    if (!hasActiveSubscription()) {
+    if (!hasSubscription) {
       alert(t("subscription.needSubscription"));
       router.push("/pricing");
       return false;

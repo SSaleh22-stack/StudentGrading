@@ -117,9 +117,9 @@ export function downloadFileAsCSV(
       });
     } else if (page.type === "attendance") {
       const attendanceRecords = (page as any).attendanceRecords || [];
-      const allDates = Array.from(
+      const allDates = (Array.from(
         new Set(attendanceRecords.map((r: AttendanceRecord) => r.date))
-      ).sort((a, b) => b.localeCompare(a));
+      ) as string[]).sort((a: string, b: string) => b.localeCompare(a));
       
       // Headers with dates
       const headers = ["Student Name", "Student ID", ...allDates];

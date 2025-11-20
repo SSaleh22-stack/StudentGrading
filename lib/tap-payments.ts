@@ -1,5 +1,5 @@
 // Tap Payments API integration
-// Note: Payment requests are handled server-side via /api/payments/create to avoid CORS issues
+// Note: Payment requests are made directly from client (static export compatible)
 
 export interface TapPaymentRequest {
   amount: number;
@@ -166,33 +166,80 @@ export async function createTapPayment(
 
   const phone = parsePhoneNumber(userData.phone);
 
-  // Call our API route instead of Tap API directly to avoid CORS issues
-  const response = await fetch("/api/payments/create", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
+  // Call Tap API directly from client
+  // Note: This requires CORS to be enabled on Tap's API or use a CORS proxy
+  const TAP_API_URL = "https://api.tap.company/v2/authorize/";
+  const TAP_SECRET_KEY = process.env.NEXT_PUBLIC_TAP_SECRET_KEY || "sk_test_XKokBfNWv6FIYuTMg5sLPjhJ";
+  const TAP_MERCHANT_ID = process.env.NEXT_PUBLIC_TAP_MERCHANT_ID || "1234";
+
+  const transactionId = `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const orderId = `ord_${planId}_${Date.now()}`;
+
+  const paymentRequest = {
+    amount: amount,
+    currency: "SAR",
+    customer_initiated: true,
+    threeDSecure: true,
+    save_card: true,
+    statement_descriptor: "Student Grading Subscription",
+    receipt: {
+      email: true,
+      sms: true,
     },
-    body: JSON.stringify({
-      amount,
-      planId,
-      redirectUrl,
-      customer: {
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        email: userData.email,
-        phone: {
-          country_code: phone.country_code,
-          number: phone.number,
-        },
+    metadata: {
+      udf1: planId,
+      udf2: userData.email,
+      udf3: transactionId,
+    },
+    reference: {
+      transaction: transactionId,
+      order: orderId,
+    },
+    customer: {
+      first_name: userData.firstName,
+      last_name: userData.lastName,
+      email: userData.email,
+      phone: {
+        country_code: phone.country_code,
+        number: phone.number,
       },
-    }),
-  });
+    },
+    merchant: {
+      id: TAP_MERCHANT_ID,
+    },
+    source: {
+      id: "src_card",
+    },
+    authorize_debit: false,
+    redirect: {
+      url: redirectUrl,
+    },
+  };
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Payment request failed");
+  // Try direct call first, fallback to CORS proxy if needed
+  try {
+    const response = await fetch(TAP_API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${TAP_SECRET_KEY}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(paymentRequest),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "Payment request failed");
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    // If CORS error, show message to user
+    if (error.message?.includes('CORS') || error.message?.includes('Failed to fetch')) {
+      throw new Error("Payment service is not accessible. Please contact support or use a different payment method.");
+    }
+    throw error;
   }
-
-  return await response.json();
 }
 

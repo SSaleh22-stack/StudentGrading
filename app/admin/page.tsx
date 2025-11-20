@@ -143,7 +143,16 @@ export default function AdminPage() {
     setShowUserDetails(true);
   };
 
-  const handleSaveUserInfo = (updatedUser: UserWithSubscription) => {
+  const handleSaveUserInfo = (updatedUser: { 
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    dateOfBirth?: string;
+    gender?: string;
+    workplace?: string;
+  }) => {
     // Get the full user data and update it
     const allUsers = getAllUsers();
     const userIndex = allUsers.findIndex(u => u.email === updatedUser.email);
@@ -562,7 +571,16 @@ export default function AdminPage() {
                 </div>
 
                 <EditUserForm
-                  user={selectedUser}
+                  user={{
+                    id: selectedUser.id,
+                    email: selectedUser.email,
+                    firstName: selectedUser.firstName,
+                    lastName: selectedUser.lastName,
+                    phone: selectedUser.phone,
+                    dateOfBirth: selectedUser.dateOfBirth,
+                    gender: selectedUser.gender,
+                    workplace: selectedUser.workplace,
+                  }}
                   onSave={handleSaveUserInfo}
                   onCancel={() => setShowUserDetails(false)}
                 />

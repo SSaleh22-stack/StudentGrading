@@ -41,25 +41,25 @@ export async function GET(request: NextRequest) {
     })
 
     // Transform to match GradeFile type
-    const transformedFiles = files.map(file => ({
+    const transformedFiles = files.map((file: any) => ({
       id: file.id,
       owner: file.ownerId, // Keep owner as email/string for compatibility
       name: file.name,
       description: file.description,
       createdAt: file.createdAt.toISOString(),
       updatedAt: file.updatedAt.toISOString(),
-      students: file.students.map(s => ({
+      students: file.students.map((s: any) => ({
         id: s.id,
         name: s.name,
         studentId: s.studentId
       })),
-      pages: file.pages.map(page => ({
+      pages: file.pages.map((page: any) => ({
         id: page.id,
         name: page.name,
         type: page.type as any,
         createdAt: page.createdAt.toISOString(),
         updatedAt: page.updatedAt.toISOString(),
-        columns: page.columns.map(col => ({
+        columns: page.columns.map((col: any) => ({
           id: col.id,
           title: col.title,
           type: col.type as any,
@@ -142,18 +142,18 @@ export async function POST(request: NextRequest) {
       description: file.description,
       createdAt: file.createdAt.toISOString(),
       updatedAt: file.updatedAt.toISOString(),
-      students: file.students.map(s => ({
+      students: file.students.map((s: any) => ({
         id: s.id,
         name: s.name,
         studentId: s.studentId
       })),
-      pages: file.pages.map(page => ({
+      pages: file.pages.map((page: any) => ({
         id: page.id,
         name: page.name,
         type: page.type as any,
         createdAt: page.createdAt.toISOString(),
         updatedAt: page.updatedAt.toISOString(),
-        columns: page.columns.map(col => ({
+        columns: page.columns.map((col: any) => ({
           id: col.id,
           title: col.title,
           type: col.type as any,

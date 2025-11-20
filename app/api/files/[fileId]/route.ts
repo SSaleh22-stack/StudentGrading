@@ -39,7 +39,7 @@ export async function GET(
 
     // Load grades for all pages
     const pagesWithGrades = await Promise.all(
-      file.pages.map(async (page) => {
+      file.pages.map(async (page: any) => {
         const grades = await prisma.gradeValue.findMany({
           where: { pageId: page.id }
         })
@@ -52,13 +52,13 @@ export async function GET(
 
         return {
           ...page,
-          grades: grades.map(g => ({
+          grades: grades.map((g: any) => ({
             id: g.id,
             columnId: g.columnId,
             studentId: g.studentId,
             value: g.value
           })),
-          attendanceRecords: attendanceRecords.map(a => ({
+          attendanceRecords: attendanceRecords.map((a: any) => ({
             id: a.id,
             studentId: a.studentId,
             date: a.date,
@@ -75,18 +75,18 @@ export async function GET(
       description: file.description,
       createdAt: file.createdAt.toISOString(),
       updatedAt: file.updatedAt.toISOString(),
-      students: file.students.map(s => ({
+      students: file.students.map((s: any) => ({
         id: s.id,
         name: s.name,
         studentId: s.studentId
       })),
-      pages: pagesWithGrades.map(page => ({
+      pages: pagesWithGrades.map((page: any) => ({
         id: page.id,
         name: page.name,
         type: page.type as any,
         createdAt: page.createdAt.toISOString(),
         updatedAt: page.updatedAt.toISOString(),
-        columns: page.columns.map(col => ({
+        columns: page.columns.map((col: any) => ({
           id: col.id,
           title: col.title,
           type: col.type as any,
@@ -187,18 +187,18 @@ export async function PUT(
         description: file.description,
         createdAt: file.createdAt.toISOString(),
         updatedAt: file.updatedAt.toISOString(),
-        students: file.students.map(s => ({
+        students: file.students.map((s: any) => ({
           id: s.id,
           name: s.name,
           studentId: s.studentId
         })),
-        pages: file.pages.map(page => ({
+        pages: file.pages.map((page: any) => ({
           id: page.id,
           name: page.name,
           type: page.type as any,
           createdAt: page.createdAt.toISOString(),
           updatedAt: page.updatedAt.toISOString(),
-          columns: page.columns.map(col => ({
+          columns: page.columns.map((col: any) => ({
             id: col.id,
             title: col.title,
             type: col.type as any,

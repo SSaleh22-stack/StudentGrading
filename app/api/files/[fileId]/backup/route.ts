@@ -5,9 +5,10 @@ import { uploadBackup } from '@/lib/blob'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { fileId: string } }
+  { params }: { params: Promise<{ fileId: string }> }
 ) {
   try {
+    const { fileId } = await params
     const userId = await getUserIdFromToken(request)
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -26,7 +27,7 @@ export async function POST(
     // Verify file ownership
     const file = await prisma.gradeFile.findFirst({
       where: {
-        id: params.fileId,
+        id: fileId,
         ownerId: userId
       }
     })
@@ -36,7 +37,7 @@ export async function POST(
     }
 
     // Upload backup to blob storage
-    const url = await uploadBackup(params.fileId, JSON.stringify(content))
+    const url = await uploadBackup(fileId, JSON.stringify(content))
 
     return NextResponse.json({ url })
   } catch (error: any) {

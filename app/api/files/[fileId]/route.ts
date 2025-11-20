@@ -4,9 +4,10 @@ import { getUserIdFromToken } from '@/lib/auth'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { fileId: string } }
+  { params }: { params: Promise<{ fileId: string }> }
 ) {
   try {
+    const { fileId } = await params
     const userId = await getUserIdFromToken(request)
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -14,7 +15,7 @@ export async function GET(
 
     const file = await prisma.gradeFile.findFirst({
       where: {
-        id: params.fileId,
+        id: fileId,
         ownerId: userId
       },
       include: {
@@ -111,9 +112,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { fileId: string } }
+  { params }: { params: Promise<{ fileId: string }> }
 ) {
   try {
+    const { fileId } = await params
     const userId = await getUserIdFromToken(request)
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -125,7 +127,7 @@ export async function PUT(
     // Verify ownership
     const existingFile = await prisma.gradeFile.findFirst({
       where: {
-        id: params.fileId,
+        id: fileId,
         ownerId: userId
       }
     })
@@ -136,7 +138,7 @@ export async function PUT(
 
     // Update file
     const file = await prisma.gradeFile.update({
-      where: { id: params.fileId },
+      where: { id: fileId },
       data: {
         name,
         description,
@@ -156,14 +158,14 @@ export async function PUT(
     if (students) {
       // Delete existing students
       await prisma.student.deleteMany({
-        where: { fileId: params.fileId }
+        where: { fileId: fileId }
       })
 
       // Create new students
       if (students.length > 0) {
         await prisma.student.createMany({
           data: students.map((s: any) => ({
-            fileId: params.fileId,
+            fileId: fileId,
             name: s.name,
             studentId: s.studentId
           }))
@@ -221,9 +223,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { fileId: string } }
+  { params }: { params: Promise<{ fileId: string }> }
 ) {
   try {
+    const { fileId } = await params
     const userId = await getUserIdFromToken(request)
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -232,7 +235,7 @@ export async function DELETE(
     // Verify ownership
     const file = await prisma.gradeFile.findFirst({
       where: {
-        id: params.fileId,
+        id: fileId,
         ownerId: userId
       }
     })
@@ -243,7 +246,7 @@ export async function DELETE(
 
     // Delete file (cascade will delete related records)
     await prisma.gradeFile.delete({
-      where: { id: params.fileId }
+      where: { id: fileId }
     })
 
     return NextResponse.json({ success: true })

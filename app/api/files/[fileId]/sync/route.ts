@@ -5,9 +5,10 @@ import { GradeFile } from '@/lib/types'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { fileId: string } }
+  { params }: { params: Promise<{ fileId: string }> }
 ) {
   try {
+    const { fileId } = await params
     const userId = await getUserIdFromToken(request)
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -19,7 +20,7 @@ export async function POST(
     // Verify ownership
     const existingFile = await prisma.gradeFile.findFirst({
       where: {
-        id: params.fileId,
+        id: fileId,
         ownerId: userId
       }
     })
@@ -30,7 +31,7 @@ export async function POST(
 
     // Update file basic info
     await prisma.gradeFile.update({
-      where: { id: params.fileId },
+      where: { id: fileId },
       data: {
         name: file.name,
         description: file.description,
@@ -41,7 +42,7 @@ export async function POST(
     // Sync students
     if (file.students) {
       const existingStudents = await prisma.student.findMany({
-        where: { fileId: params.fileId }
+        where: { fileId: fileId }
       })
 
       const existingStudentIds = new Set(existingStudents.map(s => s.id))
@@ -71,7 +72,7 @@ export async function POST(
           await prisma.student.create({
             data: {
               id: student.id,
-              fileId: params.fileId,
+              fileId: fileId,
               name: student.name,
               studentId: student.studentId
             }
@@ -93,7 +94,7 @@ export async function POST(
           },
           create: {
             id: page.id,
-            fileId: params.fileId,
+            fileId: fileId,
             name: page.name,
             type: page.type
           }

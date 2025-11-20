@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/navigation";
 import { Column } from "@/lib/types";
-import { hasActiveSubscription } from "@/lib/subscription";
+import { useSubscription } from "@/lib/hooks/useSubscription";
 
 interface GradeCellProps {
   column: Column;
@@ -28,10 +28,10 @@ export default function GradeCell({
   const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   
-  const hasSubscription = hasActiveSubscription();
+  const { hasSubscription } = useSubscription();
   
   const checkSubscription = () => {
-    if (!hasActiveSubscription()) {
+    if (!hasSubscription) {
       alert(t("subscription.needSubscription"));
       router.push("/pricing");
       return false;

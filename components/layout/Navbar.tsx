@@ -8,11 +8,14 @@ import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import LoginForm from "@/components/auth/LoginForm";
 import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
+import { getCurrentUser } from "@/lib/storage";
+import { isAdmin } from "@/lib/admin";
 
 export default function Navbar() {
   const { t } = useTranslation();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isUserAdmin, setIsUserAdmin] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -21,6 +24,13 @@ export default function Navbar() {
     const checkLogin = () => {
       const loggedIn = localStorage.getItem("isLoggedIn") === "true";
       setIsLoggedIn(loggedIn);
+      
+      if (loggedIn) {
+        const currentUserEmail = getCurrentUser();
+        setIsUserAdmin(isAdmin(currentUserEmail));
+      } else {
+        setIsUserAdmin(false);
+      }
     };
     checkLogin();
     // Listen for storage changes (in case of logout)

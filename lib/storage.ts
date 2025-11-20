@@ -1,9 +1,10 @@
-// Local storage utilities for managing grade files
+// Local storage utilities for managing grade files and users
 
 import { GradeFile, Page } from "./types";
 
 const STORAGE_KEY = "studentGrading_files";
 const USER_KEY = "currentUser";
+const USERS_KEY = "studentGrading_users";
 
 export function getCurrentUser(): string | null {
   if (typeof window === "undefined") return null;
@@ -13,6 +14,43 @@ export function getCurrentUser(): string | null {
 export function setCurrentUser(email: string): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(USER_KEY, email);
+}
+
+// User management functions
+export function getAllUsers(): any[] {
+  if (typeof window === "undefined") return [];
+  const stored = localStorage.getItem(USERS_KEY);
+  if (!stored) return [];
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return [];
+  }
+}
+
+export function getUserByEmail(email: string): any | null {
+  const users = getAllUsers();
+  return users.find((u) => u.email === email) || null;
+}
+
+export function saveUser(userData: any): void {
+  if (typeof window === "undefined") return;
+  const users = getAllUsers();
+  const existingIndex = users.findIndex((u) => u.email === userData.email);
+  
+  if (existingIndex >= 0) {
+    users[existingIndex] = userData;
+  } else {
+    users.push(userData);
+  }
+  
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+}
+
+// Get files by owner email
+export function getFilesByOwnerEmail(ownerEmail: string): GradeFile[] {
+  const allFiles = getAllFiles();
+  return allFiles.filter((file) => file.owner === ownerEmail);
 }
 
 export function getAllFiles(): GradeFile[] {
@@ -113,4 +151,3 @@ export function migrateFile(file: GradeFile): GradeFile {
     grades: undefined,
   };
 }
-

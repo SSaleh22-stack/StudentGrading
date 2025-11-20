@@ -17,12 +17,26 @@ A bilingual (Arabic + English) web application for university teachers to manage
 npm install
 ```
 
-2. Run the development server:
+2. Set up your database:
+   - Copy `.env.example` to `.env.local`
+   - Add your database connection string to `DATABASE_URL`
+   - See [DATABASE_SETUP.md](./DATABASE_SETUP.md) for detailed instructions
+
+3. Initialize the database:
+```bash
+# Generate Prisma Client
+npx prisma generate
+
+# Create database and run migrations
+npx prisma migrate dev --name init
+```
+
+4. Run the development server:
 ```bash
 npm run dev
 ```
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser.
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Project Structure
 

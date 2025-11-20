@@ -13,6 +13,7 @@ import { getFileById, getCurrentUser, saveFile } from "@/lib/storage";
 import { GradeFile, Page, PageType, Student } from "@/lib/types";
 import { downloadFileAsCSV, downloadAsPDF, generatePDFContent } from "@/lib/download";
 import Button from "@/components/ui/Button";
+import { updateUserOnlineStatus } from "@/lib/user-status";
 
 export default function FileDetail() {
   const { t } = useTranslation();
@@ -26,35 +27,49 @@ export default function FileDetail() {
   const [isAddStudentsOpen, setIsAddStudentsOpen] = useState(false);
 
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem("isLoggedIn");
-    if (!isLoggedIn) {
-      router.push("/");
-      return;
-    }
-
-    if (fileId) {
-      const fileData = getFileById(fileId);
-      const user = getCurrentUser();
-      
-      if (!fileData) {
-        router.push("/dashboard");
+    function loadFile() {
+      const isLoggedIn = localStorage.getItem("isLoggedIn");
+      if (!isLoggedIn) {
+        router.push("/");
         return;
       }
 
-      // Check if user owns this file
-      if (fileData.owner !== user) {
-        router.push("/dashboard");
-        return;
-      }
+      if (fileId) {
+        try {
+          const fileData = getFileById(fileId);
+          const user = getCurrentUser();
+          
+          if (!fileData) {
+            router.push("/dashboard");
+            return;
+          }
 
-      setFile(fileData);
-      
-      // Set active page to first page or create default if none
-      if (fileData.pages && fileData.pages.length > 0) {
-        setActivePageId(fileData.pages[0].id);
+          // Check if user owns this file
+          if (fileData.owner !== user) {
+            router.push("/dashboard");
+            return;
+          }
+
+          // Update online status
+          if (user) {
+            updateUserOnlineStatus(user);
+          }
+
+          setFile(fileData);
+          
+          // Set active page to first page or create default if none
+          if (fileData.pages && fileData.pages.length > 0) {
+            setActivePageId(fileData.pages[0].id);
+          }
+        } catch (error) {
+          console.error("Error loading file:", error);
+          router.push("/dashboard");
+        }
       }
+      setLoading(false);
     }
-    setLoading(false);
+
+    loadFile();
   }, [fileId, router]);
 
   const handleFileUpdate = (updatedFile: GradeFile) => {

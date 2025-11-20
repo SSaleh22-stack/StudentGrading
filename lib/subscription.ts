@@ -4,10 +4,14 @@ export interface SubscriptionData {
   expiresAt: string;
 }
 
-export function getSubscription(): SubscriptionData | null {
+export function getSubscription(userEmail?: string): SubscriptionData | null {
   if (typeof window === "undefined") return null;
   
-  const subscription = localStorage.getItem("subscription");
+  // Get subscription for specific user or current user
+  const email = userEmail || localStorage.getItem("userEmail") || localStorage.getItem("currentUser");
+  const subscriptionKey = email ? `subscription_${email}` : "subscription";
+  
+  const subscription = localStorage.getItem(subscriptionKey);
   if (!subscription) return null;
 
   try {
@@ -18,7 +22,7 @@ export function getSubscription(): SubscriptionData | null {
     
     if (expiresAt < now) {
       // Subscription expired
-      localStorage.removeItem("subscription");
+      localStorage.removeItem(subscriptionKey);
       return null;
     }
     
@@ -42,7 +46,7 @@ export function isSubscriptionExpired(): boolean {
   return expiresAt < now;
 }
 
-export function setSubscription(plan: string): SubscriptionData {
+export function setSubscription(plan: string, userEmail?: string): SubscriptionData {
   const now = new Date();
   let expiresAt: Date;
   
@@ -60,7 +64,11 @@ export function setSubscription(plan: string): SubscriptionData {
     expiresAt: expiresAt.toISOString(),
   };
   
-  localStorage.setItem("subscription", JSON.stringify(subscriptionData));
+  // Store subscription per user
+  const email = userEmail || localStorage.getItem("userEmail") || localStorage.getItem("currentUser");
+  const subscriptionKey = email ? `subscription_${email}` : "subscription";
+  
+  localStorage.setItem(subscriptionKey, JSON.stringify(subscriptionData));
   return subscriptionData;
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Input from "../ui/Input";
 import Button from "../ui/Button";
@@ -8,20 +8,30 @@ import Link from "next/link";
 
 interface SignupFormProps {
   onSuccess?: () => void;
+  initialEmail?: string;
 }
 
-export default function SignupForm({ onSuccess }: SignupFormProps) {
+export default function SignupForm({ onSuccess, initialEmail }: SignupFormProps) {
   const router = useRouter();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
-    email: "",
+    email: initialEmail || "",
+    password: "",
+    confirmPassword: "",
     phone: "",
     dateOfBirth: "",
     gender: "",
     workplace: "",
     acceptPrivacy: false,
   });
+  
+  // Update email if initialEmail changes
+  useEffect(() => {
+    if (initialEmail) {
+      setFormData(prev => ({ ...prev, email: initialEmail }));
+    }
+  }, [initialEmail]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -42,12 +52,39 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
       newErrors.email = "Please enter a valid email address";
     }
 
+    if (!formData.password.trim()) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+
+    if (!formData.confirmPassword.trim()) {
+      newErrors.confirmPassword = "Please confirm your password";
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+    }
+
     if (!formData.phone.trim()) {
       newErrors.phone = "Phone number is required";
+    } else if (!/^\d+$/.test(formData.phone)) {
+      newErrors.phone = "Phone number must contain only numbers";
     }
 
     if (!formData.dateOfBirth) {
       newErrors.dateOfBirth = "Date of birth is required";
+    } else {
+      // Check if user is at least 12 years old
+      const birthDate = new Date(formData.dateOfBirth);
+      const today = new Date();
+      const age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      const dayDiff = today.getDate() - birthDate.getDate();
+      
+      const actualAge = monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? age - 1 : age;
+      
+      if (actualAge < 12) {
+        newErrors.dateOfBirth = "You must be at least 12 years old to sign up";
+      }
     }
 
     if (!formData.gender) {
@@ -77,11 +114,23 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
     setIsSubmitting(true);
 
     try {
-      // Store user data in localStorage
+      // Check if user already exists
+      const { getUserByEmail, saveUser } = await import("@/lib/storage");
+      const existingUser = getUserByEmail(formData.email);
+
+      if (existingUser) {
+        setErrors({ submit: "An account with this email already exists. Please login instead." });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Create user data
       const userData = {
+        id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
+        password: formData.password, // Store password (in production, hash this)
         phone: formData.phone,
         dateOfBirth: formData.dateOfBirth,
         gender: formData.gender,
@@ -89,10 +138,14 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
         createdAt: new Date().toISOString(),
       };
 
-      localStorage.setItem("userData", JSON.stringify(userData));
+      // Save user to localStorage
+      saveUser(userData);
+
+      // Set login state
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("userEmail", formData.email);
       localStorage.setItem("currentUser", formData.email);
+      localStorage.setItem("userData", JSON.stringify(userData));
 
       // Call onSuccess callback if provided (to close modal)
       if (onSuccess) {
@@ -101,8 +154,9 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
 
       // Redirect to dashboard
       router.push("/dashboard");
-    } catch (error) {
-      setErrors({ submit: "An error occurred. Please try again." });
+    } catch (error: any) {
+      console.error("Signup error:", error);
+      setErrors({ submit: error.message || "An error occurred. Please try again." });
     } finally {
       setIsSubmitting(false);
     }
@@ -113,6 +167,11 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
   ) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
+
+    // For phone number, only allow numbers
+    if (name === "phone" && value && !/^\d*$/.test(value)) {
+      return; // Don't update if non-numeric
+    }
 
     setFormData((prev) => ({
       ...prev,
@@ -169,6 +228,34 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
           value={formData.email}
           onChange={handleChange}
           error={errors.email}
+          required
+        />
+      </div>
+
+      {/* Password */}
+      <div>
+        <Input
+          type="password"
+          name="password"
+          label="Password"
+          placeholder="Enter your password (min 6 characters)"
+          value={formData.password}
+          onChange={handleChange}
+          error={errors.password}
+          required
+        />
+      </div>
+
+      {/* Confirm Password */}
+      <div>
+        <Input
+          type="password"
+          name="confirmPassword"
+          label="Confirm Password"
+          placeholder="Confirm your password"
+          value={formData.confirmPassword}
+          onChange={handleChange}
+          error={errors.confirmPassword}
           required
         />
       </div>

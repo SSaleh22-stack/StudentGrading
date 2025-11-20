@@ -30,7 +30,9 @@
     "newest": "Newest",
     "oldest": "Oldest",
     "all": "All",
-    "to": "to"
+    "to": "to",
+    "yes": "Yes",
+    "no": "No"
   },
   "landing": {
     "title": "STUDENT GRADING",
@@ -41,6 +43,9 @@
     "forgotPassword": "Forgot password?",
     "noAccount": "Don't have an account?",
     "signupLink": "Sign up here"
+  },
+  "login": {
+    "accountNotFound": "Account not found. Would you like to create a new account?"
   },
   "signup": {
     "title": "Create Account",

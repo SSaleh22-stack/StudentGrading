@@ -64,7 +64,8 @@ export default function PaymentPage() {
     try {
       // For free trial, no payment needed
       if (selectedPlan.id === "trial") {
-        setSubscription(selectedPlan.id);
+        const userEmail = localStorage.getItem("userEmail") || localStorage.getItem("currentUser");
+        setSubscription(selectedPlan.id, userEmail || undefined);
         router.push("/dashboard/subscription?success=true");
         return;
       }

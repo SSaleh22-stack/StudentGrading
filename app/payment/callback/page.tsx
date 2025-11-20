@@ -25,7 +25,8 @@ export default function PaymentCallback() {
     if (status === "CAPTURED" || status === "AUTHORIZED") {
       // Payment successful
       if (planId) {
-        setSubscription(planId);
+        const userEmail = localStorage.getItem("userEmail") || localStorage.getItem("currentUser");
+        setSubscription(planId, userEmail || undefined);
         localStorage.removeItem("pendingPlanId");
         setStatus("success");
         setMessage(t("payment.successMessage"));

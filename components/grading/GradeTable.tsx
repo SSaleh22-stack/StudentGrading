@@ -10,7 +10,7 @@ import AddMultipleColumnsModal from "./AddMultipleColumnsModal";
 import Button from "../ui/Button";
 import { saveFile } from "@/lib/storage";
 import { downloadPageAsCSV, generatePDFContent } from "@/lib/download";
-import { hasActiveSubscription } from "@/lib/subscription";
+import { useSubscription } from "@/lib/hooks/useSubscription";
 import { useRouter } from "next/navigation";
 
 interface GradeTableProps {
@@ -35,19 +35,17 @@ export default function GradeTable({
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved">(
     "saved"
   );
-  const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(
-    null
-  );
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [studentSortBy, setStudentSortBy] = useState<"name" | "id" | null>(null);
   const [selectedColumns, setSelectedColumns] = useState<Set<string>>(new Set());
   const [showColumnActions, setShowColumnActions] = useState(false);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const isInitialMount = useRef(true);
   
-  const hasSubscription = hasActiveSubscription();
+  const { hasSubscription } = useSubscription();
   
   const checkSubscription = () => {
-    if (!hasActiveSubscription()) {
+    if (!hasSubscription) {
       alert(t("subscription.needSubscription"));
       router.push("/pricing");
       return false;
@@ -176,8 +174,8 @@ export default function GradeTable({
       return;
     }
 
-    if (autoSaveTimeout) {
-      clearTimeout(autoSaveTimeout);
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
     }
 
     setSaveStatus("unsaved");
@@ -186,17 +184,17 @@ export default function GradeTable({
       handleAutoSave();
     }, 1000); // 1 second debounce
 
-    setAutoSaveTimeout(timeout);
+    autoSaveTimeoutRef.current = timeout;
 
     return () => {
       clearTimeout(timeout);
     };
-  }, [columns, students, grades]);
+  }, [columns, students, grades, handleAutoSave]);
 
   // Manual save
   const handleManualSave = () => {
-    if (autoSaveTimeout) {
-      clearTimeout(autoSaveTimeout);
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
     }
     handleAutoSave();
   };

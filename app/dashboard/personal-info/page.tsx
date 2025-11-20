@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import SideNav from "@/components/layout/SideNav";
 import Card from "@/components/ui/Card";
-import { getCurrentUser } from "@/lib/storage";
+import { getCurrentUser, getUserByEmail } from "@/lib/storage";
 
 interface UserData {
   firstName: string;
@@ -31,13 +31,22 @@ export default function PersonalInfo() {
     }
 
     // Load user data from localStorage
-    const stored = localStorage.getItem("userData");
-    if (stored) {
-      try {
-        const data = JSON.parse(stored);
-        setUserData(data);
-      } catch (error) {
-        console.error("Error parsing user data:", error);
+    const userEmail = getCurrentUser();
+    if (userEmail) {
+      const user = getUserByEmail(userEmail);
+      if (user) {
+        setUserData(user);
+      } else {
+        // Fallback to old storage format
+        const stored = localStorage.getItem("userData");
+        if (stored) {
+          try {
+            const data = JSON.parse(stored);
+            setUserData(data);
+          } catch (error) {
+            console.error("Error parsing user data:", error);
+          }
+        }
       }
     }
     setLoading(false);

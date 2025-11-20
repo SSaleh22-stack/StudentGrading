@@ -12,6 +12,7 @@ import FileCardSkeleton from "@/components/files/FileCardSkeleton";
 import Skeleton from "@/components/ui/Skeleton";
 import { getLatestFiles, getCurrentUser, saveFile, deleteFile } from "@/lib/storage";
 import { GradeFile } from "@/lib/types";
+import { updateUserOnlineStatus } from "@/lib/user-status";
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -21,20 +22,32 @@ export default function Dashboard() {
   const [editingFile, setEditingFile] = useState<GradeFile | null>(null);
 
   useEffect(() => {
-    // Check if user is logged in
-    const isLoggedIn = localStorage.getItem("isLoggedIn");
-    if (!isLoggedIn) {
-      router.push("/");
-      return;
+    async function loadFiles() {
+      // Check if user is logged in
+      const isLoggedIn = localStorage.getItem("isLoggedIn");
+      if (!isLoggedIn) {
+        router.push("/");
+        return;
+      }
+
+      try {
+        // Load latest files
+        const user = getCurrentUser();
+        if (user) {
+          // Update online status
+          updateUserOnlineStatus(user);
+          const latestFiles = getLatestFiles(user, 4);
+          setFiles(latestFiles);
+        }
+      } catch (error) {
+        console.error("Error loading files:", error);
+        setFiles([]); // Set empty array on error
+      } finally {
+        setLoading(false);
+      }
     }
 
-    // Load latest files
-    const user = getCurrentUser();
-    if (user) {
-      const latestFiles = getLatestFiles(user, 4);
-      setFiles(latestFiles);
-    }
-    setLoading(false);
+    loadFiles();
   }, [router]);
 
   const handleCreateNewFile = () => {

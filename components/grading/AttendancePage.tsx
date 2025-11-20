@@ -12,8 +12,8 @@ import {
 import Button from "../ui/Button";
 import { saveFile } from "@/lib/storage";
 import Modal from "../ui/Modal";
-import { downloadPageAsCSV, generatePDFContent } from "@/lib/download";
-import { hasActiveSubscription } from "@/lib/subscription";
+import { downloadAttendanceAsCSV, generatePDFContent } from "@/lib/download";
+import { useSubscription } from "@/lib/hooks/useSubscription";
 import { useRouter } from "next/navigation";
 
 interface AttendancePageProps {
@@ -228,7 +228,7 @@ export default function AttendancePage({
               variant="outline"
               size="sm"
               onClick={() => {
-                downloadPageAsCSV(file, page, file.students, [], [], (page as any).attendanceRecords || [], selectedDate);
+                downloadAttendanceAsCSV(file, page, file.students, attendanceRecords, selectedDate);
               }}
             >
               {t("common.download")} CSV

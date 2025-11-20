@@ -31,13 +31,23 @@ export default function MyFiles() {
     }
 
     // Load all files
-    const user = getCurrentUser();
-    if (user) {
-      const files = getFilesByOwner(user);
-      setAllFiles(files);
-      setFilteredFiles(files);
+    function loadFiles() {
+      try {
+        const user = getCurrentUser();
+        if (user) {
+          const files = getFilesByOwner(user);
+          setAllFiles(files);
+          setFilteredFiles(files);
+        }
+      } catch (error) {
+        console.error("Error loading files:", error);
+        setAllFiles([]);
+        setFilteredFiles([]);
+      } finally {
+        setLoading(false);
+      }
     }
-    setLoading(false);
+    loadFiles();
   }, [router]);
 
   const handleCreateNewFile = () => {

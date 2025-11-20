@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // Change to "mysql", "sqlite", or "mongodb" if needed
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  firstName     String
+  lastName      String
+  phone         String
+  dateOfBirth   String?
+  gender        String?
+  workplace     String?
+  passwordHash  String?   // For future password authentication
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  files         GradeFile[]
+  subscription  Subscription?
+  
+  @@map("users")
+}
+
+model GradeFile {
+  id          String   @id @default(cuid())
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  students    Student[]
+  pages       Page[]
+  
+  @@map("grade_files")
+}
+
+model Student {
+  id        String     @id @default(cuid())
+  fileId    String
+  file      GradeFile  @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  name      String
+  studentId String
+  createdAt DateTime   @default(now())
+  
+  grades    GradeValue[]
+  
+  @@map("students")
+}
+
+model Page {
+  id        String   @id @default(cuid())
+  fileId    String
+  file      GradeFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  name      String
+  type      String   // "grading" | "attendance"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  columns   Column[]
+  grades    GradeValue[]
+  attendanceRecords AttendanceRecord[]
+  
+  @@map("pages")
+}
+
+model Column {
+  id          String   @id @default(cuid())
+  pageId      String
+  page        Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  title       String
+  type        String   // "input" | "sum" | "max" | "average" | "round"
+  order       Int      @default(0)
+  pinned      Boolean  @default(false)
+  sourceColumns Json?  // Array of column IDs for computed columns
+  roundTo     Float?
+  createdAt   DateTime @default(now())
+  
+  @@map("columns")
+}
+
+model GradeValue {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  columnId  String
+  value     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([pageId, studentId, columnId])
+  @@map("grade_values")
+}
+
+model AttendanceRecord {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  studentId String
+  date      String   // ISO date string
+  status    String   // "present" | "absent" | "excused"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([pageId, studentId, date])
+  @@map("attendance_records")
+}
+
+model Subscription {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan      String   // "trial" | "monthly" | "yearly"
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("subscriptions")
+}
+

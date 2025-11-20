@@ -1,0 +1,253 @@
+You are an expert full-stack engineer (10+ years) specializing in:
+- Next.js 15 (App Router) with React and TypeScript
+- Tailwind CSS for modern, responsive, light-theme UI
+- React-based state management and table/spreadsheet-like UIs
+- Internationalization with i18next / react-i18next
+- CSV parsing in the browser with PapaParse or react-papaparse
+
+Your job:
+Help me build a bilingual (Arabic + English) web app called **STUDENT GRADING** where university teachers can:
+- Log in / sign up
+- Create “grade files” for their classes
+- Enter / import students
+- Enter and compute grades in a flexible table
+- See recent files on login
+- Auto-save changes
+
+I want you to:
+1. Work in **small, safe iterations**.
+2. At each step, clearly explain what you are doing and which files you will create or modify.
+3. Prefer **clean, well-typed TypeScript** and minimal extra dependencies.
+4. Use **Next.js 15 App Router** (`app/` directory) for pages and routing.
+5. Use **Tailwind CSS** for styling with a **light theme**.
+6. Use **react-i18next** (or next-i18next) for bilingual UI (Arabic + English).
+7. Use **client-side CSV parsing** (PapaParse / react-papaparse) for imports.
+
+--------------------------------
+HIGH-LEVEL PRODUCT SPEC
+--------------------------------
+
+App name: STUDENT GRADING
+
+Primary audience:
+- University instructors / teachers.
+- Main actions: log in, manage grade files, enter/update grades.
+
+Languages:
+- Arabic and English.
+- There must be a **language toggle** (e.g., simple button) that switches all UI text.
+- Layout must look good in both **LTR (English)** and **RTL (Arabic)**:
+  - When Arabic is active, use `dir="rtl"` and mirror layouts where sensible.
+  - When English is active, use `dir="ltr"`.
+
+Design:
+- **Light theme**, clean, minimal, professional.
+- Use Tailwind for spacing, colors, and responsive layout.
+- On hover for key buttons and nav items, add subtle scale/shadow effects (no crazy animations).
+
+Tech stack:
+- Next.js 15 App Router, React, TypeScript.
+- Tailwind CSS for styling.
+- react-i18next for translations & language switch.
+- Local state and local storage for v1 (front-end only).
+- For CSV: PapaParse or react-papaparse in the browser.
+
+--------------------------------
+PAGE & FEATURE SPEC
+--------------------------------
+
+(1) Landing (Home) Page – “STUDENT GRADING”
+Route: `/`
+
+Layout:
+- Full-width **hero section** with a background image behind the main title.
+  - I will later replace the placeholder background image with my own.
+  - Please set this up using Tailwind-friendly classes and a simple `backgroundImage` in CSS or Tailwind utilities.
+- Navbar at the top with these links:
+  - Home
+  - About Us
+  - Pricing
+  - Contact Us
+- The app name/title “STUDENT GRADING” should:
+  - Appear with a **slow upward motion + fade-in animation** every time the page loads or is refreshed.
+  - Animation should be smooth, not too fast.
+- Main hero content:
+  - **Left side**: Logo area (for now use a placeholder logo with text; I will replace later with my actual image).
+  - **Right side**: A card/box containing:
+    - Login form (email/username + password).
+    - A “Sign up” link/button.
+    - Light theme + subtle shadow and rounded corners.
+
+Behavior:
+- No full back-end auth yet: start with a **fake/simple auth** to allow navigation to the dashboard after “login”.
+- You may store a simple “isLoggedIn” flag in local storage or React state for v1.
+- Later, we can swap this for real auth (NextAuth, Supabase, etc.), so keep the structure modular.
+
+(2) Dashboard (after login)
+Route: `/dashboard`
+
+Layout:
+- Main content area:
+  - Show **the latest 4 files** (grade files) created by this user.
+    - Each file card: file name, creation date, last modified date, and a small description.
+    - Clicking a card opens that grading file.
+  - A primary button: “Create New Grade File”.
+- **Right-side vertical nav bar** with these items:
+  - Personal Info
+  - My Files
+  - Subscription
+- Right-side nav behavior:
+  - Each item is a button or link.
+  - On hover, the nav item **slightly increases in size** (scale) and maybe gets a slightly stronger background/underline.
+  - Keep the effect subtle and professional.
+- The whole dashboard should be responsive:
+  - On smaller screens, right-side nav can move to the top or a slide-out panel.
+
+(3) “Create New File” Flow
+Route: could be `/files/new` or handled via a modal/stepper inside `/dashboard`.
+
+Steps:
+
+Step A – Basic info:
+- Ask user for:
+  - File name (required).
+  - Optional description.
+- Provide a button to go to student import step.
+
+Step B – Add Students:
+- Two options:
+  1. **Manual entry**:
+     - Start with at least one row with inputs:
+       - Student Name (required)
+       - Student ID (required)
+     - Allow adding more rows (Add Student button).
+     - Validate that at least one row has both name and ID before proceeding.
+  2. **CSV upload**:
+     - Allow uploading a CSV file.
+     - At minimum, CSV should support “name” and “id” columns.
+     - Allow additional columns (e.g., section, email) and keep them in the student data structure.
+- After uploading/entering:
+  - Show a **preview table of all imported students** (and columns).
+  - Let the user **confirm** the data before creating the grade sheet.
+  - Only after confirmation, create the grade file and redirect to the grading page.
+
+Implementation notes:
+- Use a CSV parsing library (PapaParse / react-papaparse) on the client side.
+- Handle basic CSV errors gracefully and show a friendly message.
+
+(4) Grading Page (Core Feature)
+Route: e.g., `/files/[fileId]`
+
+Purpose:
+- Spreadsheet-like view where each row is a student and each column is a grade or computed column.
+
+Initial state:
+- Rows: students from the previous step (name, ID, and any extra fields).
+- Columns:
+  - Start with a couple of default grade columns (e.g., “Assignment 1”, “Midterm”, etc.) or start with none and let the user add them.
+
+Column types:
+- Each column has:
+  - ID
+  - Title (user-editable)
+  - Type (one of):
+    1. **Input** – normal grade column where user types numbers manually.
+    2. **Sum** – computed column that sums selected other columns per row.
+    3. **Max** – computed column that takes the max of selected other columns per row.
+- When user adds a new column:
+  - Ask for:
+    - Column title (string).
+    - Column type (Input / Sum / Max).
+    - For Sum or Max, allow selecting which existing columns are included.
+- For each row (student):
+  - Input columns: user can type numeric values.
+  - Sum/Max columns: values are auto-calculated and not directly editable.
+
+Behavior:
+- Table should update values immediately when the user changes grades in any Input column.
+- Use React state to hold:
+  - List of students.
+  - List of columns and their metadata.
+  - All grade values.
+- Implement **auto-save**:
+  - On every change (or debounced), automatically persist the file data to local storage or a simple storage layer.
+  - Also provide a manual “Save” button for user confidence.
+- Allow the user to:
+  - Rename columns and update their types if possible.
+  - Add more columns at any time.
+  - Optionally hide/remove columns (you can handle delete carefully so it doesn’t break formulas).
+
+(5) File Management
+- Each “file” is a logical object containing:
+  - ID
+  - Owner (for now, just current fake user)
+  - Name, description
+  - CreatedAt, updatedAt
+  - Students (rows)
+  - Columns + column metadata (including type and formula definition)
+  - Grades (values)
+- Store this in local storage (for single-user demo).
+- On dashboard:
+  - Show the latest 4 files on login.
+  - Also provide a “My Files” view (linked from right nav) with a full list.
+
+(6) Internationalization (i18n)
+- Use react-i18next (or next-i18next) to manage translations:
+  - All UI text (nav items, buttons, labels, placeholders, help text) must be pulled from translation files.
+  - Keep translation keys organized by feature, e.g., `landing.title`, `dashboard.newFileButton`, etc.
+- Provide a language switch (e.g., buttons for “EN” / “عربي”) accessible at the top navbar or user profile area.
+- Respect RTL for Arabic:
+  - Switch `dir` and/or Tailwind classes for alignment when Arabic is active.
+
+(7) Animations & “Accessorizing”
+We will keep a clear separation between core features and “sparkle”.
+
+Core first:
+- Functional login flow (fake auth).
+- File creation, student import, grading table, computed columns, auto-save.
+- Basic bilingual support and layout.
+
+Accessorizing (later phase):
+- Smooth entrance animation for the “STUDENT GRADING” title (translateY + opacity).
+- Hover scaling for nav items, buttons, cards.
+- Subtle shadows and rounded corners.
+- Nice background images for hero section.
+- Loading skeletons or spinners where needed.
+
+Make sure all “sparkle” is **non-blocking** and does not break usability if disabled.
+
+--------------------------------
+ENGINEERING EXPECTATIONS
+--------------------------------
+
+- Use modern Next.js 15 patterns with App Router.
+- Use TypeScript everywhere with clear types for:
+  - Student
+  - GradeFile
+  - Column (and ColumnType)
+- Keep components small and reusable.
+- Separate UI components (buttons, cards, inputs) where it makes sense.
+- Add comments where logic is complex (especially computed columns and autosave).
+- Follow accessibility best practices (labels, focus states, sensible tab order).
+
+--------------------------------
+HOW I WANT YOU TO WORK WITH ME
+--------------------------------
+
+1. Start by proposing a **file structure** for the project (Next.js app, pages, components, lib).
+2. Then implement features in this order:
+   - Phase 1: Project setup (Next.js, Tailwind, basic layout).
+   - Phase 2: Landing page (navbar, hero, title animation, login/signup card).
+   - Phase 3: Fake auth + dashboard with right-side nav and “latest 4 files”.
+   - Phase 4: “Create new file” flow (manual student entry + CSV upload + preview).
+   - Phase 5: Grading table with input/sum/max columns and auto-save.
+   - Phase 6: i18n (English/Arabic) and RTL layout.
+   - Phase 7: Accessorizing (animations, hover effects, final polish).
+3. At each phase:
+   - Explain what you will do.
+   - Show the updated code (or diffs) for relevant files.
+   - Suggest basic tests / manual checks.
+4. Do NOT jump straight to the final UI. Build iteratively and keep the app runnable at each step.
+5. If something is ambiguous, make a reasonable assumption, explain it briefly, and move forward.
+
+Now, start with Phase 1: suggest the tech stack details (confirm Next.js + Tailwind + react-i18next + CSV library), create the initial Next.js project structure, configure Tailwind, and create a very basic landing page and layout shell. Then stop and show me the changes.

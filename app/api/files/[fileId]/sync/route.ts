@@ -45,15 +45,15 @@ export async function POST(
         where: { fileId: fileId }
       })
 
-      const existingStudentIds = new Set(existingStudents.map(s => s.id))
-      const newStudentIds = new Set(file.students.map(s => s.id))
+      const existingStudentIds = new Set(existingStudents.map((s: any) => s.id))
+      const newStudentIds = new Set(file.students.map((s: any) => s.id))
 
       // Delete removed students
-      const toDelete = existingStudents.filter(s => !newStudentIds.has(s.id))
+      const toDelete = existingStudents.filter((s: any) => !newStudentIds.has(s.id))
       if (toDelete.length > 0) {
         await prisma.student.deleteMany({
           where: {
-            id: { in: toDelete.map(s => s.id) }
+            id: { in: toDelete.map((s: any) => s.id) }
           }
         })
       }
@@ -105,15 +105,15 @@ export async function POST(
           const existingColumns = await prisma.column.findMany({
             where: { pageId: page.id }
           })
-          const existingColumnIds = new Set(existingColumns.map(c => c.id))
-          const newColumnIds = new Set(page.columns.map(c => c.id))
+          const existingColumnIds = new Set(existingColumns.map((c: any) => c.id))
+          const newColumnIds = new Set(page.columns.map((c: any) => c.id))
 
           // Delete removed columns
-          const toDelete = existingColumns.filter(c => !newColumnIds.has(c.id))
+          const toDelete = existingColumns.filter((c: any) => !newColumnIds.has(c.id))
           if (toDelete.length > 0) {
             await prisma.column.deleteMany({
               where: {
-                id: { in: toDelete.map(c => c.id) }
+                id: { in: toDelete.map((c: any) => c.id) }
               }
             })
           }

@@ -1,6 +1,6 @@
 // Vercel Blob storage utilities
-
-import { put, list, del, head } from '@vercel/blob'
+// Blob storage functionality removed - using localStorage instead
+// This file is kept for API route compatibility but doesn't use @vercel/blob
 
 const BLOB_READ_WRITE_TOKEN = process.env.BLOB_READ_WRITE_TOKEN
 
@@ -20,21 +20,8 @@ export async function uploadFile(
   content: string | Buffer | Blob,
   contentType?: string
 ): Promise<string> {
-  if (!BLOB_READ_WRITE_TOKEN) {
-    throw new Error('Blob storage is not configured. Please set BLOB_READ_WRITE_TOKEN.')
-  }
-
-  try {
-    const blob = await put(filename, content, {
-      access: 'public',
-      contentType,
-      token: BLOB_READ_WRITE_TOKEN,
-    })
-    return blob.url
-  } catch (error) {
-    console.error('Error uploading file to blob storage:', error)
-    throw error
-  }
+  // Stub implementation - blob storage not used with localStorage
+  throw new Error('Blob storage is not available. Using localStorage instead.')
 }
 
 /**
@@ -43,20 +30,8 @@ export async function uploadFile(
  * @returns Array of blob metadata
  */
 export async function listFiles(prefix?: string) {
-  if (!BLOB_READ_WRITE_TOKEN) {
-    throw new Error('Blob storage is not configured. Please set BLOB_READ_WRITE_TOKEN.')
-  }
-
-  try {
-    const { blobs } = await list({
-      prefix,
-      token: BLOB_READ_WRITE_TOKEN,
-    })
-    return blobs
-  } catch (error) {
-    console.error('Error listing files from blob storage:', error)
-    throw error
-  }
+  // Stub implementation - blob storage not used with localStorage
+  return []
 }
 
 /**
@@ -64,18 +39,7 @@ export async function listFiles(prefix?: string) {
  * @param url - The URL of the file to delete
  */
 export async function deleteFile(url: string) {
-  if (!BLOB_READ_WRITE_TOKEN) {
-    throw new Error('Blob storage is not configured. Please set BLOB_READ_WRITE_TOKEN.')
-  }
-
-  try {
-    await del(url, {
-      token: BLOB_READ_WRITE_TOKEN,
-    })
-  } catch (error) {
-    console.error('Error deleting file from blob storage:', error)
-    throw error
-  }
+  // Stub implementation - blob storage not used with localStorage
 }
 
 /**
@@ -83,19 +47,8 @@ export async function deleteFile(url: string) {
  * @param url - The URL of the file
  */
 export async function getFileInfo(url: string) {
-  if (!BLOB_READ_WRITE_TOKEN) {
-    throw new Error('Blob storage is not configured. Please set BLOB_READ_WRITE_TOKEN.')
-  }
-
-  try {
-    const blob = await head(url, {
-      token: BLOB_READ_WRITE_TOKEN,
-    })
-    return blob
-  } catch (error) {
-    console.error('Error getting file info from blob storage:', error)
-    throw error
-  }
+  // Stub implementation - blob storage not used with localStorage
+  return null
 }
 
 /**
@@ -112,14 +65,8 @@ export async function uploadGradeExport(
   type: 'csv' | 'pdf',
   pageId?: string
 ): Promise<string> {
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-  const filename = pageId
-    ? `exports/${fileId}/${pageId}_${timestamp}.${type}`
-    : `exports/${fileId}/full_${timestamp}.${type}`
-  
-  const contentType = type === 'csv' ? 'text/csv' : 'application/pdf'
-  
-  return uploadFile(filename, content, contentType)
+  // Stub implementation - blob storage not used with localStorage
+  throw new Error('Blob storage is not available. Using localStorage instead.')
 }
 
 /**
@@ -132,9 +79,7 @@ export async function uploadBackup(
   fileId: string,
   content: string | Buffer
 ): Promise<string> {
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-  const filename = `backups/${fileId}/backup_${timestamp}.json`
-  
-  return uploadFile(filename, content, 'application/json')
+  // Stub implementation - blob storage not used with localStorage
+  throw new Error('Blob storage is not available. Using localStorage instead.')
 }
 

@@ -1,5 +1,3 @@
-import FileDetailClient from "./FileDetailClient";
-
 export async function generateStaticParams() {
   // For static export, we must return at least one path.
   // Since file data is client-side (localStorage), we return a placeholder.
@@ -8,6 +6,8 @@ export async function generateStaticParams() {
     { fileId: 'placeholder' }
   ];
 }
+
+import FileDetailClient from "./FileDetailClient";
 
 export default function FileDetailPage() {
   return <FileDetailClient />;

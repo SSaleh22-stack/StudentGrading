@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
@@ -9,7 +9,7 @@ import Button from "@/components/ui/Button";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { setSubscription } from "@/lib/subscription";
 
-export default function PaymentCallback() {
+function PaymentCallbackContent() {
   const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -20,21 +20,32 @@ export default function PaymentCallback() {
     // Get payment status from URL parameters
     const tap_id = searchParams.get("tap_id");
     const status = searchParams.get("status");
-    const planId = searchParams.get("plan") || localStorage.getItem("pendingPlanId");
+    
+    let planId: string | null = null;
+    try {
+      planId = searchParams.get("plan") || (typeof window !== "undefined" ? localStorage.getItem("pendingPlanId") : null);
+    } catch (error) {
+      console.error("Error accessing localStorage:", error);
+    }
 
     if (status === "CAPTURED" || status === "AUTHORIZED") {
       // Payment successful
       if (planId) {
-        const userEmail = localStorage.getItem("userEmail") || localStorage.getItem("currentUser");
-        setSubscription(planId, userEmail || undefined);
-        localStorage.removeItem("pendingPlanId");
-        setStatus("success");
-        setMessage(t("payment.successMessage"));
-        
-        // Redirect to subscription page after 2 seconds
-        setTimeout(() => {
-          router.push("/dashboard/subscription?success=true");
-        }, 2000);
+        try {
+          const userEmail = typeof window !== "undefined" 
+            ? (localStorage.getItem("userEmail") || localStorage.getItem("currentUser"))
+            : null;
+          setSubscription(planId, userEmail || undefined);
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("pendingPlanId");
+          }
+          setStatus("success");
+          setMessage(t("payment.successMessage"));
+        } catch (error) {
+          console.error("Error processing payment success:", error);
+          setStatus("failed");
+          setMessage(t("payment.planNotFound"));
+        }
       } else {
         setStatus("failed");
         setMessage(t("payment.planNotFound"));
@@ -43,7 +54,13 @@ export default function PaymentCallback() {
       // Payment failed
       setStatus("failed");
       setMessage(t("payment.failedMessage"));
-      localStorage.removeItem("pendingPlanId");
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("pendingPlanId");
+        }
+      } catch (error) {
+        console.error("Error removing pending plan:", error);
+      }
     } else if (tap_id) {
       // Still processing
       setStatus("processing");
@@ -144,6 +161,30 @@ export default function PaymentCallback() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PaymentCallback() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto">
+            <Card>
+              <div className="text-center py-12">
+                <LoadingSpinner size="lg" className="mx-auto mb-4" />
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  Processing...
+                </h2>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    }>
+      <PaymentCallbackContent />
+    </Suspense>
   );
 }
 

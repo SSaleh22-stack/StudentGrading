@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
@@ -17,7 +17,7 @@ interface PricingPlan {
   period: string;
 }
 
-export default function PaymentPage() {
+function PaymentPageContent() {
   const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -50,9 +50,13 @@ export default function PaymentPage() {
   const selectedPlan = plans[planId] || plans.monthly;
 
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem("isLoggedIn");
-    if (!isLoggedIn) {
-      router.push("/");
+    try {
+      const isLoggedIn = typeof window !== "undefined" ? localStorage.getItem("isLoggedIn") : null;
+      if (!isLoggedIn) {
+        router.push("/");
+      }
+    } catch (error) {
+      console.error("Error checking login status:", error);
     }
   }, [router]);
 
@@ -64,10 +68,19 @@ export default function PaymentPage() {
     try {
       // For free trial, no payment needed
       if (selectedPlan.id === "trial") {
-        const userEmail = localStorage.getItem("userEmail") || localStorage.getItem("currentUser");
-        setSubscription(selectedPlan.id, userEmail || undefined);
-        router.push("/dashboard/subscription?success=true");
-        return;
+        try {
+          const userEmail = typeof window !== "undefined" 
+            ? (localStorage.getItem("userEmail") || localStorage.getItem("currentUser"))
+            : null;
+          setSubscription(selectedPlan.id, userEmail || undefined);
+          router.push("/dashboard/subscription?success=true");
+          return;
+        } catch (error) {
+          console.error("Error processing trial subscription:", error);
+          setError(t("payment.paymentError"));
+          setLoading(false);
+          return;
+        }
       }
 
       // Check if user data exists
@@ -86,7 +99,13 @@ export default function PaymentPage() {
       const redirectUrl = `${baseUrl}/payment/callback?plan=${selectedPlan.id}`;
 
       // Store pending plan ID
-      localStorage.setItem("pendingPlanId", selectedPlan.id);
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("pendingPlanId", selectedPlan.id);
+        }
+      } catch (error) {
+        console.error("Error storing pending plan:", error);
+      }
 
       // Create Tap Payment
       const paymentResponse = await createTapPayment(amount, selectedPlan.id, redirectUrl);
@@ -102,7 +121,13 @@ export default function PaymentPage() {
     } catch (err: any) {
       setError(err.message || t("payment.paymentError"));
       setLoading(false);
-      localStorage.removeItem("pendingPlanId");
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("pendingPlanId");
+        }
+      } catch (error) {
+        console.error("Error removing pending plan:", error);
+      }
     }
   };
 
@@ -199,6 +224,26 @@ export default function PaymentPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PaymentPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto">
+            <div className="text-center text-gray-600">
+              <LoadingSpinner size="lg" className="mx-auto mb-4" />
+              <p>Loading...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <PaymentPageContent />
+    </Suspense>
   );
 }
 

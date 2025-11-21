@@ -13,6 +13,7 @@ import FileCardSkeleton from "@/components/files/FileCardSkeleton";
 import Skeleton from "@/components/ui/Skeleton";
 import { getFilesByOwner, getCurrentUser, saveFile, deleteFile } from "@/lib/storage";
 import { GradeFile } from "@/lib/types";
+import { isAdmin } from "@/lib/admin";
 
 export default function MyFiles() {
   const { t } = useTranslation();
@@ -27,6 +28,13 @@ export default function MyFiles() {
     const isLoggedIn = localStorage.getItem("isLoggedIn");
     if (!isLoggedIn) {
       router.push("/");
+      return;
+    }
+
+    // Redirect admin users to admin dashboard
+    const user = getCurrentUser();
+    if (user && isAdmin(user)) {
+      router.push("/admin");
       return;
     }
 

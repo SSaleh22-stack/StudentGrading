@@ -104,11 +104,19 @@ export default function Navbar() {
               <LanguageSwitcher />
               {isLoggedIn ? (
                 <>
-                  <Link href="/dashboard">
-                    <Button variant="outline" size="md">
-                      {t("common.dashboard")}
-                    </Button>
-                  </Link>
+                  {isUserAdmin ? (
+                    <Link href="/admin">
+                      <Button variant="outline" size="md">
+                        Admin
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Link href="/dashboard">
+                      <Button variant="outline" size="md">
+                        {t("common.dashboard")}
+                      </Button>
+                    </Link>
+                  )}
                   <Button variant="secondary" size="md" onClick={handleLogout}>
                     {t("common.logout")}
                   </Button>

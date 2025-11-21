@@ -8,6 +8,8 @@ import SideNav from "@/components/layout/SideNav";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import { getSubscription } from "@/lib/subscription";
+import { getCurrentUser } from "@/lib/storage";
+import { isAdmin } from "@/lib/admin";
 
 interface PricingPlan {
   id: string;
@@ -32,6 +34,14 @@ function SubscriptionContent() {
       router.push("/");
       return;
     }
+
+    // Redirect admin users to admin dashboard
+    const user = getCurrentUser();
+    if (user && isAdmin(user)) {
+      router.push("/admin");
+      return;
+    }
+
     // Load current subscription
     try {
       const subscription = getSubscription();

@@ -13,6 +13,7 @@ import Skeleton from "@/components/ui/Skeleton";
 import { getLatestFiles, getCurrentUser, saveFile, deleteFile } from "@/lib/storage";
 import { GradeFile } from "@/lib/types";
 import { updateUserOnlineStatus } from "@/lib/user-status";
+import { isAdmin } from "@/lib/admin";
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -30,9 +31,15 @@ export default function Dashboard() {
         return;
       }
 
+      // Redirect admin users to admin dashboard
+      const user = getCurrentUser();
+      if (user && isAdmin(user)) {
+        router.push("/admin");
+        return;
+      }
+
       try {
         // Load latest files
-        const user = getCurrentUser();
         if (user) {
           // Update online status
           updateUserOnlineStatus(user);

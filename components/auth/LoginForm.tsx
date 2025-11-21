@@ -48,8 +48,8 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
         onSuccess();
       }
       
-      // Admin can access dashboard now
-      router.push("/dashboard");
+      // Admin should be redirected to admin dashboard
+      router.push("/admin");
       return;
     }
 

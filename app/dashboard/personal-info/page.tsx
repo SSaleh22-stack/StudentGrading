@@ -6,6 +6,7 @@ import Navbar from "@/components/layout/Navbar";
 import SideNav from "@/components/layout/SideNav";
 import Card from "@/components/ui/Card";
 import { getCurrentUser, getUserByEmail } from "@/lib/storage";
+import { isAdmin } from "@/lib/admin";
 
 interface UserData {
   firstName: string;
@@ -30,8 +31,14 @@ export default function PersonalInfo() {
       return;
     }
 
-    // Load user data from localStorage
+    // Redirect admin users to admin dashboard
     const userEmail = getCurrentUser();
+    if (userEmail && isAdmin(userEmail)) {
+      router.push("/admin");
+      return;
+    }
+
+    // Load user data from localStorage
     if (userEmail) {
       const user = getUserByEmail(userEmail);
       if (user) {

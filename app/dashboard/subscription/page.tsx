@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
@@ -20,7 +20,7 @@ interface PricingPlan {
   trialDays?: number;
 }
 
-export default function Subscription() {
+function SubscriptionContent() {
   const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -30,11 +30,16 @@ export default function Subscription() {
     const isLoggedIn = localStorage.getItem("isLoggedIn");
     if (!isLoggedIn) {
       router.push("/");
+      return;
     }
     // Load current subscription
-    const subscription = getSubscription();
-    if (subscription) {
-      setCurrentPlan(subscription.plan);
+    try {
+      const subscription = getSubscription();
+      if (subscription) {
+        setCurrentPlan(subscription.plan);
+      }
+    } catch (error) {
+      console.error("Error loading subscription:", error);
     }
     
     // Show success message if redirected from payment
@@ -209,6 +214,21 @@ export default function Subscription() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Subscription() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center text-gray-600">Loading...</div>
+        </div>
+      </div>
+    }>
+      <SubscriptionContent />
+    </Suspense>
   );
 }
 

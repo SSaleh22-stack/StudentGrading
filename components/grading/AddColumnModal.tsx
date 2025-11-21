@@ -52,7 +52,7 @@ export default function AddColumnModal({
         setSourceColumnId(availableSourceColumns[0].id);
       }
     }
-  }, [type]);
+  }, [type, availableSourceColumns, sourceColumnId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
